@@ -5,9 +5,9 @@ import java.util.Comparator;
 public class Node{
     private Node left,right;
     private int frequency;
-    private char character;
+    private String character;
 
-    public Node(char character) {
+    public Node(String character) {
         this.character = character;
         this.frequency = 1;
         this.left = null;
@@ -44,7 +44,7 @@ public class Node{
         this.frequency = frequency;
     }
 
-    public char getCharacter() {
+    public String getCharacter() {
         return character;
     }
 

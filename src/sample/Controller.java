@@ -1,12 +1,13 @@
 package sample;
 
+import java.io.*;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
 public class Controller {
 
-    String test = "DDDDCBBAAA";
-//    String test = "ABA11$A\nABA11$A";
+//    String test = "DDDDCBBAAA";
+//    String test = "ABA11$A";
 //    String test = "GBBCT10.SEQ         Genetic Sequence Data Bank\n" +
 //            "                        December 15 2021\n" +
 //            "\n" +
@@ -153,29 +154,52 @@ public class Controller {
 //            "                     /locus_tag=\"SM39_0006\"\n" +
 //            "     CDS             complement(5970..7406)";
 
-    HashMap<Character, String> prefixHashMap;
+    HashMap<String, String> prefixHashMap;
+    String test;
     int NUM_BYTES = 1;
-    public void readFile(){
+    public String readFile() throws IOException {
+        File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
+        BufferedReader br = new BufferedReader(new FileReader(file));
+//        String test;
+        StringBuilder content = new StringBuilder();
+        String line;
+        while((line = br.readLine()) != null){
+            content.append(line);
+//            content.append('\n');
+            content.append(System.lineSeparator());
+        }
+        content.deleteCharAt(content.length()-1);
+//        test=br.readLine();
+        System.out.println(content.toString());
+
+
+        return content.toString();
 
     }
 
-    public void buildNodes(){
-        HashMap<Character, Integer> nodesHashMap = new HashMap<>();
+    public void buildNodes() throws IOException {
+        test = readFile();
+        HashMap<String, Integer> nodesHashMap = new HashMap<>();
         String nBytes="";
         int n = 0;
+        System.out.println(test);
         for(char c : test.toCharArray()){
             n++;
             if(n % NUM_BYTES != 0){
-                nBytes+=c;
-                continue;
+                if(test.length()-n != 0){
+                    nBytes+=c;
+                    continue;
+                }
             }
             nBytes+=c;
-            nodesHashMap.putIfAbsent(c, 0);
-            nodesHashMap.put(c,nodesHashMap.get(c)+1);
+            nodesHashMap.putIfAbsent(nBytes, 0);
+            nodesHashMap.put(nBytes,nodesHashMap.get(nBytes)+1);
+            System.out.println(nBytes);
+            nBytes="";
         }
         PriorityQueue<Node> nodesPriorityQueue = new PriorityQueue<>(4, new NodeComparator());
 
-        for(HashMap.Entry<Character,Integer> entry : nodesHashMap.entrySet()){
+        for(HashMap.Entry<String,Integer> entry : nodesHashMap.entrySet()){
             Node node = new Node(entry.getKey());
             node.setFrequency(entry.getValue());
             nodesPriorityQueue.add(node);
@@ -225,8 +249,20 @@ public class Controller {
 
     public String encode(){
         String coded = "";
+        String nBytes="";
+        int n = 0;
         for(char c : test.toCharArray()){
-            coded += prefixHashMap.get(c);
+            n++;
+            if(n % NUM_BYTES != 0){
+                if(test.length()-n != 0) {
+                    nBytes+=c;
+                    continue;
+                }
+            }
+            nBytes+=c;
+//            System.out.println(nBytes);
+            coded += prefixHashMap.get(nBytes);
+            nBytes="";
         }
 
         return coded;
