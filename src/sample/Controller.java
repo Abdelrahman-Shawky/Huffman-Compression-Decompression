@@ -1,8 +1,7 @@
 package sample;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class Controller {
 
@@ -159,18 +158,27 @@ public class Controller {
     int NUM_BYTES = 1;
     public String readFile() throws IOException {
         File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
-        BufferedReader br = new BufferedReader(new FileReader(file));
+//        BufferedReader br = new BufferedReader(new FileReader(file));
+        FileInputStream in = new FileInputStream(file);
+        BufferedInputStream buffer = new BufferedInputStream(in);
+
 //        String test;
+//        List<Byte> content = new ArrayList<>();
         StringBuilder content = new StringBuilder();
-        String line;
-        while((line = br.readLine()) != null){
-            content.append(line);
-//            content.append('\n');
-            content.append(System.lineSeparator());
+        byte line[] = new byte[NUM_BYTES];
+//        int character;
+        while((buffer.read(line)) != -1){
+            for(byte b : line){
+                content.append((char)b);
+//                b=0;
+            }
+
+//            content.append(System.lineSeparator());
+            System.out.println(content);
         }
-        content.deleteCharAt(content.length()-1);
+//        content.deleteCharAt(content.length()-1);
 //        test=br.readLine();
-        System.out.println(content.toString());
+//        System.out.println(content.toString());
 
 
         return content.toString();
