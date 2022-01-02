@@ -1,6 +1,9 @@
 package sample;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Controller {
@@ -173,6 +176,7 @@ public class Controller {
 //                b=0;
             }
 
+
 //            content.append(System.lineSeparator());
             System.out.println(content);
         }
@@ -186,25 +190,50 @@ public class Controller {
     }
 
     public void buildNodes() throws IOException {
-        test = readFile();
+//        test = readFile();
+
         HashMap<String, Integer> nodesHashMap = new HashMap<>();
-        String nBytes="";
-        int n = 0;
-        System.out.println(test);
-        for(char c : test.toCharArray()){
-            n++;
-            if(n % NUM_BYTES != 0){
-                if(test.length()-n != 0){
-                    nBytes+=c;
-                    continue;
-                }
+
+        File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
+        FileInputStream in = new FileInputStream(file);
+        BufferedInputStream buffer = new BufferedInputStream(in);
+
+        StringBuilder nBytes = new StringBuilder();
+        StringBuilder content = new StringBuilder();
+        byte line[] = new byte[NUM_BYTES];
+        while((buffer.read(line)) != -1){
+            for(int i=0; i<NUM_BYTES; i++){
+//                System.out.println(line);
+                nBytes.append((char)line[i]);
+                line[i]=0;
             }
-            nBytes+=c;
-            nodesHashMap.putIfAbsent(nBytes, 0);
-            nodesHashMap.put(nBytes,nodesHashMap.get(nBytes)+1);
-            System.out.println(nBytes);
-            nBytes="";
+            content.append(nBytes.toString());
+            nodesHashMap.putIfAbsent(nBytes.toString(), 0);
+            nodesHashMap.put(nBytes.toString(),nodesHashMap.get(nBytes.toString())+1);
+//            System.out.println(nBytes.toString());
+//            nBytes.append(System.lineSeparator());
+//            System.out.println(nBytes);
+            nBytes.delete(0,nBytes.length());
         }
+        test = content.toString();
+
+//        String nBytes="";
+//        int n = 0;
+////        System.out.println(test);
+//        for(char c : test.toCharArray()){
+//            n++;
+//            if(n % NUM_BYTES != 0){
+//                if(test.length()-n != 0){
+//                    nBytes+=c;
+//                    continue;
+//                }
+//            }
+//            nBytes+=c;
+//            nodesHashMap.putIfAbsent(nBytes, 0);
+//            nodesHashMap.put(nBytes,nodesHashMap.get(nBytes)+1);
+//            System.out.println(nBytes);
+//            nBytes="";
+//        }
         PriorityQueue<Node> nodesPriorityQueue = new PriorityQueue<>(4, new NodeComparator());
 
         for(HashMap.Entry<String,Integer> entry : nodesHashMap.entrySet()){
@@ -233,9 +262,9 @@ public class Controller {
         buildPrefix(headNode, prefix);
 
         String coded = encode();
-        System.out.println(coded);
+//        System.out.println(coded);
         String decoded = decode(headNode, coded);
-        System.out.println(decoded);
+//        System.out.println(decoded);
     }
 
     //https://www.journaldev.com/
@@ -255,7 +284,7 @@ public class Controller {
         }
     }
 
-    public String encode(){
+    public String encode() throws IOException {
         String coded = "";
         String nBytes="";
         int n = 0;
@@ -273,28 +302,94 @@ public class Controller {
             nBytes="";
         }
 
+        BitSet huffmanCodeBit = new BitSet(coded.length());
+
+        for (int i = 0; i < coded.length(); i++) {
+            if(coded.charAt(i) == '1')
+                huffmanCodeBit.set(i);
+        }
+//        File path = new File("out.txt");
+//        ObjectOutputStream outputStream = null;
+//        try {
+//            outputStream = new ObjectOutputStream(new FileOutputStream(path));
+//            outputStream.writeObject(huffmanCodeBit);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+        FileOutputStream file = new FileOutputStream("output.txt");
+        BufferedOutputStream output = new BufferedOutputStream(file);
+        BitSet bitSet = new BitSet(coded.length());
+        int counter=0;
+        for(Character c : coded.toCharArray()){
+            if(c.equals('1')){
+                bitSet.set(counter);
+            }
+            else{
+                bitSet.clear(counter);
+            }
+            System.out.println(c);
+            counter++;
+        }
+        //lost trailing zero
+        System.out.println(bitSet.length());
+        output.write(bitSet.toByteArray());
+        System.out.println(coded);
+        System.out.println(bitSet.toByteArray()[0]);
+        System.out.println(bitSet.toString());
+        StringBuilder s = new StringBuilder();
+
+        for(int i=0;i<bitSet.length();i++) {
+            if(bitSet.get(i)){
+                s.append("1");
+            }
+            else{
+                s.append("0");
+            }
+        }
+        System.out.println(s.toString());
+        output.close();
+
+//        File file = new File("out2.txt");
+//        byte[] data = coded.getBytes(StandardCharsets.UTF_8);
+//
+//        try (RandomAccessFile stream = new RandomAccessFile(file, "rw");
+//             FileChannel channel = stream.getChannel())
+//        {
+//            ByteBuffer buffer = ByteBuffer.allocate(data.length);
+//            buffer.put(data);
+//            buffer.flip();
+//            channel.write(buffer);
+//
+//            System.out.println("Successfully written data to the file");
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
         return coded;
     }
 
     public String decode(Node node,String encoded){
         Node decodingNode = node;
-        String decoded = "";
+//        String decoded = "";
+        StringBuilder decoded = new StringBuilder();
         for (char c : encoded.toCharArray()){
             if(c=='0'){
                 decodingNode = decodingNode.getLeft();
                 if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
-                    decoded += decodingNode.getCharacter();
+                    decoded.append(decodingNode.getCharacter());
                     decodingNode = node;
                 }
             }
             if(c=='1'){
                 decodingNode = decodingNode.getRight();
                 if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
-                    decoded += decodingNode.getCharacter();
+                    decoded.append(decodingNode.getCharacter());
                     decodingNode = node;
                 }
             }
         }
-        return decoded;
+        return decoded.toString();
     }
 }
