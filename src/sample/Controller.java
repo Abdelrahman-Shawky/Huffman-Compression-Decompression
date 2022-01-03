@@ -1,5 +1,7 @@
 package sample;
 
+import com.sun.org.apache.xalan.internal.xsltc.dom.AbsoluteIterator;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -208,6 +210,7 @@ public class Controller {
                 line[i]=0;
             }
             content.append(nBytes.toString());
+//            System.out.println(nBytes.toString());
             nodesHashMap.putIfAbsent(nBytes.toString(), 0);
             nodesHashMap.put(nBytes.toString(),nodesHashMap.get(nBytes.toString())+1);
 //            System.out.println(nBytes.toString());
@@ -215,6 +218,8 @@ public class Controller {
 //            System.out.println(nBytes);
             nBytes.delete(0,nBytes.length());
         }
+//        System.out.println(content.toString());
+        System.out.println(nodesHashMap);
         test = content.toString();
 
 //        String nBytes="";
@@ -252,6 +257,7 @@ public class Controller {
             Node nodeResult = new Node(node1.getFrequency()+node2.getFrequency(),node1,node2);
 //            System.out.println(nodeResult.getFrequency());
             nodesPriorityQueue.add(nodeResult);
+//            System.out.println(nodesPriorityQueue.peek().getFrequency());
         }
 //        System.out.println(nodesPriorityQueue.peek().getFrequency());
 
@@ -263,8 +269,9 @@ public class Controller {
 
         String coded = encode();
 //        System.out.println(coded);
-        String decoded = decode(headNode, coded);
+//        String decoded = decode(headNode, coded);
 //        System.out.println(decoded);
+        System.out.println("Doneeeee");
     }
 
     //https://www.journaldev.com/
@@ -285,6 +292,7 @@ public class Controller {
     }
 
     public String encode() throws IOException {
+        System.out.println(prefixHashMap);
         String coded = "";
         String nBytes="";
         int n = 0;
@@ -301,26 +309,36 @@ public class Controller {
             coded += prefixHashMap.get(nBytes);
             nBytes="";
         }
-
-        BitSet huffmanCodeBit = new BitSet(coded.length());
-
-        for (int i = 0; i < coded.length(); i++) {
-            if(coded.charAt(i) == '1')
-                huffmanCodeBit.set(i);
-        }
-//        File path = new File("out.txt");
-//        ObjectOutputStream outputStream = null;
-//        try {
-//            outputStream = new ObjectOutputStream(new FileOutputStream(path));
-//            outputStream.writeObject(huffmanCodeBit);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-        FileOutputStream file = new FileOutputStream("output.txt");
+//        System.out.println(coded);
+        FileOutputStream file = new FileOutputStream("output.bin");
         BufferedOutputStream output = new BufferedOutputStream(file);
         BitSet bitSet = new BitSet(coded.length());
+        System.out.println(coded.length());
+        String codedLength = Integer.toBinaryString(coded.length());
+        System.out.println(codedLength);
+        int numberOfBits = codedLength.length();
+//        System.out.println(codedLengthInt);
+//        int numberOfBits = (int) ((Math.ceil(7 / 8)+1)*8);
+        System.out.println(numberOfBits);
+        int numberOfBytes = (int) (Math.ceil(numberOfBits / 8)+1);
+        int neededZeros = numberOfBytes*8 - numberOfBits;
+        System.out.println("Needed zeros = " +  neededZeros);
+
+        BitSet codedLengthBitSet = new BitSet(codedLength.length());
         int counter=0;
+        for(Character c : codedLength.toCharArray()){
+            if(c.equals('1')){
+                codedLengthBitSet.set(counter);
+            }
+            else{
+                codedLengthBitSet.clear(counter);
+            }
+            counter++;
+        }
+        output.write(codedLengthBitSet.toByteArray());
+        output.write(10);
+
+        counter=0;
         for(Character c : coded.toCharArray()){
             if(c.equals('1')){
                 bitSet.set(counter);
@@ -328,45 +346,55 @@ public class Controller {
             else{
                 bitSet.clear(counter);
             }
-            System.out.println(c);
             counter++;
         }
         //lost trailing zero
-        System.out.println(bitSet.length());
         output.write(bitSet.toByteArray());
         System.out.println(coded);
-        System.out.println(bitSet.toByteArray()[0]);
-        System.out.println(bitSet.toString());
-        StringBuilder s = new StringBuilder();
 
-        for(int i=0;i<bitSet.length();i++) {
-            if(bitSet.get(i)){
-                s.append("1");
-            }
-            else{
-                s.append("0");
-            }
-        }
-        System.out.println(s.toString());
         output.close();
+        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
+        FileInputStream fileInputStream = new FileInputStream(fileinput);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
-//        File file = new File("out2.txt");
-//        byte[] data = coded.getBytes(StandardCharsets.UTF_8);
-//
-//        try (RandomAccessFile stream = new RandomAccessFile(file, "rw");
-//             FileChannel channel = stream.getChannel())
-//        {
-//            ByteBuffer buffer = ByteBuffer.allocate(data.length);
-//            buffer.put(data);
-//            buffer.flip();
-//            channel.write(buffer);
-//
-//            System.out.println("Successfully written data to the file");
-//        }
-//        catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        int bytesRead=-1;
+        StringBuilder content = new StringBuilder();
+        StringBuilder readFile = new StringBuilder();
+        bytesRead=bufferedInputStream.read();
+        System.out.println(Integer.toBinaryString(bytesRead));
 
+//        while((bytesRead=bufferedInputStream.read()) != -1){
+//            String newByte = Integer.toBinaryString(bytesRead);
+//            content.append(newByte);
+//            content.reverse();
+//            //truncates trailing zeros
+//            while(content.length()<8){
+//                content.append(0);
+//            }
+//            readFile.append(content.toString());
+//            System.out.println(content);
+//            content.delete(0,content.length());
+//
+//
+//        }
+//        System.out.println(readFile.toString());
+
+
+//        System.out.println(bitSet.toString());
+//        StringBuilder s = new StringBuilder();
+//
+//        for(int i=0;i<bitSet.length();i++) {
+//            if(bitSet.get(i)){
+//                s.append("1");
+//            }
+//            else{
+//                s.append("0");
+//            }
+//        }
+//        System.out.println(s.toString());
+
+
+        bufferedInputStream.close();
         return coded;
     }
 
