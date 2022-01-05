@@ -20,6 +20,20 @@ public class Node{
         this.right = right;
     }
 
+    public Node(String character, Node left, Node right, int frequency) {
+        this.left = left;
+        this.right = right;
+        this.frequency = frequency;
+        this.character = character;
+    }
+
+    public boolean isLeafNode() {
+        if(this.left==null && this.right==null)
+            return true;
+        else
+            return false;
+    }
+
     public Node getLeft() {
         return left;
     }

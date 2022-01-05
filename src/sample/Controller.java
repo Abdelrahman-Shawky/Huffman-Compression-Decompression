@@ -218,6 +218,7 @@ public class Controller {
 //            System.out.println(nBytes);
             nBytes.delete(0,nBytes.length());
         }
+        nodesHashMap.put("ÿ",1);
 //        System.out.println(content.toString());
         System.out.println(nodesHashMap);
         test = content.toString();
@@ -267,7 +268,7 @@ public class Controller {
         String prefix="";
         buildPrefix(headNode, prefix);
 
-        String coded = encode();
+        String coded = encode(headNode);
 //        System.out.println(coded);
 //        String decoded = decode(headNode, coded);
 //        System.out.println(decoded);
@@ -291,10 +292,90 @@ public class Controller {
         }
     }
 
-    public String encode() throws IOException {
+    private void encodeTree(Node headNode, StringBuilder stringBuilder, StringBuilder s) throws IOException {
+
+        if(headNode.isLeafNode()){
+            stringBuilder.append(1);
+            s.append(1);
+            for(Character c : headNode.getCharacter().toCharArray()){
+                String value = Integer.toBinaryString(c);
+                int length = value.length();
+                //Padding with zeros so each node takes 1 byte
+                while(length<8){
+                    stringBuilder.append(0);
+                    length++;
+                }
+                stringBuilder.append(Integer.toBinaryString(c));
+                s.append(c);
+            }
+        }
+        else{
+            stringBuilder.append(0);
+            s.append(0);
+            encodeTree(headNode.getLeft(),stringBuilder,s);
+            encodeTree(headNode.getRight(),stringBuilder,s);
+        }
+    }
+
+//    private Node readNode(BufferedInputStream inputStream) throws IOException {
+//        if (inputStream.read() == 1)
+//        {
+//            return new Node(inputStream.read(), null, null);
+//        }
+//        else
+//        {
+//            Node leftChild = ReadNode(reader);
+//            Node rightChild = ReadNode(reader);
+//            return new Node(0, leftChild, rightChild);
+//        }
+//    }
+
+    public String encode(Node headNode) throws IOException {
+        FileOutputStream file = new FileOutputStream("output.bin");
+        BufferedOutputStream output = new BufferedOutputStream(file);
+
         System.out.println(prefixHashMap);
         String coded = "";
-        String nBytes="";
+        String nBytes = "";
+
+        StringBuilder treeEncoded = new StringBuilder();
+        StringBuilder treeEncodedString = new StringBuilder();
+
+        String value = Integer.toBinaryString(prefixHashMap.size());
+        int length = value.length();
+        while(length<8){
+            treeEncoded.append(0);
+            length++;
+        }
+        treeEncoded.append(value);
+        System.out.println(prefixHashMap.size());
+        System.out.println(treeEncoded);
+
+
+        encodeTree(headNode, treeEncoded,treeEncodedString);
+        System.out.println(treeEncoded);
+        System.out.println(treeEncodedString);
+
+        BitSet treeBitSet = new BitSet(treeEncoded.length());
+        int count=0;
+        for(Character c : treeEncoded.toString().toCharArray()){
+            if(c.equals('1')){
+                treeBitSet.set(count);
+            }
+            else{
+                treeBitSet.clear(count);
+            }
+            count++;
+        }
+        output.write(treeBitSet.toByteArray());
+
+//        readNode(bufferedInputStream);
+
+
+
+
+        //Encode Content
+        coded+=prefixHashMap.get("ÿ");
         int n = 0;
         for(char c : test.toCharArray()){
             n++;
@@ -309,34 +390,24 @@ public class Controller {
             coded += prefixHashMap.get(nBytes);
             nBytes="";
         }
+        coded+=prefixHashMap.get("ÿ");
 //        System.out.println(coded);
-        FileOutputStream file = new FileOutputStream("output.bin");
-        BufferedOutputStream output = new BufferedOutputStream(file);
-        BitSet bitSet = new BitSet(coded.length());
-        System.out.println(coded.length());
-        String codedLength = Integer.toBinaryString(coded.length());
-        System.out.println(codedLength);
-        int numberOfBits = codedLength.length();
-//        System.out.println(codedLengthInt);
-//        int numberOfBits = (int) ((Math.ceil(7 / 8)+1)*8);
-        System.out.println(numberOfBits);
-        int numberOfBytes = (int) (Math.ceil(numberOfBits / 8)+1);
-        int neededZeros = numberOfBytes*8 - numberOfBits;
-        System.out.println("Needed zeros = " +  neededZeros);
 
-        BitSet codedLengthBitSet = new BitSet(codedLength.length());
+        BitSet bitSet = new BitSet(coded.length());
+//
+////        BitSet codedLengthBitSet = new BitSet(codedLength.length());
         int counter=0;
-        for(Character c : codedLength.toCharArray()){
-            if(c.equals('1')){
-                codedLengthBitSet.set(counter);
-            }
-            else{
-                codedLengthBitSet.clear(counter);
-            }
-            counter++;
-        }
-        output.write(codedLengthBitSet.toByteArray());
-        output.write(10);
+////        for(Character c : codedLength.toCharArray()){
+////            if(c.equals('1')){
+////                codedLengthBitSet.set(counter);
+////            }
+////            else{
+////                codedLengthBitSet.clear(counter);
+////            }
+////            counter++;
+////        }
+////        output.write(codedLengthBitSet.toByteArray());
+////        output.write(10);
 
         counter=0;
         for(Character c : coded.toCharArray()){
@@ -348,6 +419,13 @@ public class Controller {
             }
             counter++;
         }
+
+//        for(char b: coded.toCharArray()){
+//            if(b == '1' ){
+//                target |=1;
+//            }
+//        }
+
         //lost trailing zero
         output.write(bitSet.toByteArray());
         System.out.println(coded);
@@ -360,29 +438,32 @@ public class Controller {
         int bytesRead=-1;
         StringBuilder content = new StringBuilder();
         StringBuilder readFile = new StringBuilder();
-        bytesRead=bufferedInputStream.read();
-        System.out.println(Integer.toBinaryString(bytesRead));
 
-//        while((bytesRead=bufferedInputStream.read()) != -1){
-//            String newByte = Integer.toBinaryString(bytesRead);
-//            content.append(newByte);
-//            content.reverse();
-//            //truncates trailing zeros
-//            while(content.length()<8){
-//                content.append(0);
-//            }
-//            readFile.append(content.toString());
+        while((bytesRead=bufferedInputStream.read()) != -1){
+            //convert integer value to string of bits
+            String newByte = Integer.toBinaryString(bytesRead);
+            content.append(newByte);
+            content.reverse();
+
+            //reverse truncation of trailing zeros
+            while(content.length()<8){
+                content.append(0);
+            }
+            readFile.append(content.toString());
 //            System.out.println(content);
-//            content.delete(0,content.length());
-//
-//
-//        }
-//        System.out.println(readFile.toString());
+            content.delete(0,content.length());
+        }
+//        String result = readFile.toString().substring(0,readFile.indexOf("1111"));
+//        String result = readFile.toString().split(prefixHashMap.get("ÿ"))[0];
+        String result = readFile.toString();
+        System.out.println(result);
+
+
 
 
 //        System.out.println(bitSet.toString());
 //        StringBuilder s = new StringBuilder();
-//
+
 //        for(int i=0;i<bitSet.length();i++) {
 //            if(bitSet.get(i)){
 //                s.append("1");
@@ -393,11 +474,11 @@ public class Controller {
 //        }
 //        System.out.println(s.toString());
 
-
         bufferedInputStream.close();
         return coded;
     }
 
+    
     public String decode(Node node,String encoded){
         Node decodingNode = node;
 //        String decoded = "";
@@ -418,6 +499,7 @@ public class Controller {
                 }
             }
         }
+
         return decoded.toString();
     }
 }
