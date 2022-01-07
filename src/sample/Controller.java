@@ -161,42 +161,12 @@ public class Controller {
     HashMap<String, String> prefixHashMap;
     String test;
     int NUM_BYTES = 1;
-    public String readFile() throws IOException {
-        File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
-//        BufferedReader br = new BufferedReader(new FileReader(file));
-        FileInputStream in = new FileInputStream(file);
-        BufferedInputStream buffer = new BufferedInputStream(in);
-
-//        String test;
-//        List<Byte> content = new ArrayList<>();
-        StringBuilder content = new StringBuilder();
-        byte line[] = new byte[NUM_BYTES];
-//        int character;
-        while((buffer.read(line)) != -1){
-            for(byte b : line){
-                content.append((char)b);
-//                b=0;
-            }
-
-
-//            content.append(System.lineSeparator());
-            System.out.println(content);
-        }
-//        content.deleteCharAt(content.length()-1);
-//        test=br.readLine();
-//        System.out.println(content.toString());
-
-
-        return content.toString();
-
-    }
 
     public void buildNodes() throws IOException {
-//        test = readFile();
 
         HashMap<String, Integer> nodesHashMap = new HashMap<>();
 
-        File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
+        File file = new File("E:\\Java Projects\\HuffmanCompression\\test1.txt");
         FileInputStream in = new FileInputStream(file);
         BufferedInputStream buffer = new BufferedInputStream(in);
 
@@ -205,62 +175,32 @@ public class Controller {
         byte line[] = new byte[NUM_BYTES];
         while((buffer.read(line)) != -1){
             for(int i=0; i<NUM_BYTES; i++){
-//                System.out.println(line);
                 nBytes.append((char)line[i]);
                 line[i]=0;
             }
             content.append(nBytes.toString());
-//            System.out.println(nBytes.toString());
             nodesHashMap.putIfAbsent(nBytes.toString(), 0);
             nodesHashMap.put(nBytes.toString(),nodesHashMap.get(nBytes.toString())+1);
-//            System.out.println(nBytes.toString());
-//            nBytes.append(System.lineSeparator());
-//            System.out.println(nBytes);
+
             nBytes.delete(0,nBytes.length());
         }
         nodesHashMap.put("ÿ",1);
-//        System.out.println(content.toString());
-        System.out.println(nodesHashMap);
         test = content.toString();
 
-//        String nBytes="";
-//        int n = 0;
-////        System.out.println(test);
-//        for(char c : test.toCharArray()){
-//            n++;
-//            if(n % NUM_BYTES != 0){
-//                if(test.length()-n != 0){
-//                    nBytes+=c;
-//                    continue;
-//                }
-//            }
-//            nBytes+=c;
-//            nodesHashMap.putIfAbsent(nBytes, 0);
-//            nodesHashMap.put(nBytes,nodesHashMap.get(nBytes)+1);
-//            System.out.println(nBytes);
-//            nBytes="";
-//        }
         PriorityQueue<Node> nodesPriorityQueue = new PriorityQueue<>(4, new NodeComparator());
 
         for(HashMap.Entry<String,Integer> entry : nodesHashMap.entrySet()){
             Node node = new Node(entry.getKey());
             node.setFrequency(entry.getValue());
             nodesPriorityQueue.add(node);
-//            System.out.println("Entry: " + entry.getKey() + " Value: " + entry.getValue());
         }
-//        System.out.println(nodesPriorityQueue.peek().getCharacter());
         while(nodesPriorityQueue.size()>1)
         {
             Node node1 = nodesPriorityQueue.poll();
-//            System.out.println("1 --> " + node1.getFrequency());
             Node node2 = nodesPriorityQueue.poll();
-//            System.out.println("2 --> " + node2.getFrequency());
             Node nodeResult = new Node(node1.getFrequency()+node2.getFrequency(),node1,node2);
-//            System.out.println(nodeResult.getFrequency());
             nodesPriorityQueue.add(nodeResult);
-//            System.out.println(nodesPriorityQueue.peek().getFrequency());
         }
-//        System.out.println(nodesPriorityQueue.peek().getFrequency());
 
         prefixHashMap = new HashMap<>();
 
@@ -269,9 +209,7 @@ public class Controller {
         buildPrefix(headNode, prefix);
 
         String coded = encode(headNode);
-//        System.out.println(coded);
-//        String decoded = decode(headNode, coded);
-//        System.out.println(decoded);
+
         System.out.println("Doneeeee");
     }
 
@@ -317,30 +255,49 @@ public class Controller {
         }
     }
 
-//    private Node readNode(BufferedInputStream inputStream) throws IOException {
-//        if (inputStream.read() == 1)
-//        {
-//            return new Node(inputStream.read(), null, null);
-//        }
-//        else
-//        {
-//            Node leftChild = ReadNode(reader);
-//            Node rightChild = ReadNode(reader);
-//            return new Node(0, leftChild, rightChild);
-//        }
-//    }
+    public void encodePrefixMap(StringBuilder encodedPrefix){
+        for(HashMap.Entry<String,String> entry : prefixHashMap.entrySet()){
+
+            String value=null;
+            for(Character c: entry.getKey().toCharArray()){
+                System.out.println(c);
+                value = Integer.toBinaryString(c);
+                int length = value.length();
+                //Padding with zeros so each node takes 1 byte
+                while(length<8){
+                    encodedPrefix.append(0);
+                    length++;
+                }
+            }
+            encodedPrefix.append(value);
+            System.out.println(encodedPrefix);
+
+            value = entry.getValue();
+            System.out.println(value);
+            int length = value.length();
+            //Padding with zeros so each node takes 1 byte
+            while(length<8) {
+                encodedPrefix.append(0);
+                length++;
+            }
+            encodedPrefix.append(value);
+            System.out.println(encodedPrefix);
+        }
+    }
 
     public String encode(Node headNode) throws IOException {
         FileOutputStream file = new FileOutputStream("output.bin");
         BufferedOutputStream output = new BufferedOutputStream(file);
 
-        System.out.println(prefixHashMap);
         String coded = "";
         String nBytes = "";
+
 
         StringBuilder treeEncoded = new StringBuilder();
         StringBuilder treeEncodedString = new StringBuilder();
 
+
+        //write number of nodes to first byte
         String value = Integer.toBinaryString(prefixHashMap.size());
         int length = value.length();
         while(length<8){
@@ -348,15 +305,10 @@ public class Controller {
             length++;
         }
         treeEncoded.append(value);
-        System.out.println(prefixHashMap.size());
-        System.out.println(treeEncoded);
-
 
         encodeTree(headNode, treeEncoded,treeEncodedString);
-        System.out.println(treeEncoded);
-        System.out.println(treeEncodedString);
 
-        BitSet treeBitSet = new BitSet(treeEncoded.length());
+        BitSet treeBitSet = new BitSet(treeEncoded.length()+coded.length());
         int count=0;
         for(Character c : treeEncoded.toString().toCharArray()){
             if(c.equals('1')){
@@ -367,15 +319,10 @@ public class Controller {
             }
             count++;
         }
-        output.write(treeBitSet.toByteArray());
-
-//        readNode(bufferedInputStream);
-
-
+//        output.write(treeBitSet.toByteArray());
 
 
         //Encode Content
-        coded+=prefixHashMap.get("ÿ");
         int n = 0;
         for(char c : test.toCharArray()){
             n++;
@@ -386,53 +333,28 @@ public class Controller {
                 }
             }
             nBytes+=c;
-//            System.out.println(nBytes);
             coded += prefixHashMap.get(nBytes);
             nBytes="";
         }
         coded+=prefixHashMap.get("ÿ");
-//        System.out.println(coded);
 
         BitSet bitSet = new BitSet(coded.length());
-//
-////        BitSet codedLengthBitSet = new BitSet(codedLength.length());
-        int counter=0;
-////        for(Character c : codedLength.toCharArray()){
-////            if(c.equals('1')){
-////                codedLengthBitSet.set(counter);
-////            }
-////            else{
-////                codedLengthBitSet.clear(counter);
-////            }
-////            counter++;
-////        }
-////        output.write(codedLengthBitSet.toByteArray());
-////        output.write(10);
-
-        counter=0;
         for(Character c : coded.toCharArray()){
             if(c.equals('1')){
-                bitSet.set(counter);
+                treeBitSet.set(count);
             }
             else{
-                bitSet.clear(counter);
+                treeBitSet.clear(count);
             }
-            counter++;
+            count++;
         }
 
-//        for(char b: coded.toCharArray()){
-//            if(b == '1' ){
-//                target |=1;
-//            }
-//        }
-
         //lost trailing zero
-        output.write(bitSet.toByteArray());
-        System.out.println(coded);
+        output.write(treeBitSet.toByteArray());
 
         output.close();
-        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
-        FileInputStream fileInputStream = new FileInputStream(fileinput);
+        File fileInput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
+        FileInputStream fileInputStream = new FileInputStream(fileInput);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
         int bytesRead=-1;
@@ -450,29 +372,9 @@ public class Controller {
                 content.append(0);
             }
             readFile.append(content.toString());
-//            System.out.println(content);
             content.delete(0,content.length());
         }
-//        String result = readFile.toString().substring(0,readFile.indexOf("1111"));
-//        String result = readFile.toString().split(prefixHashMap.get("ÿ"))[0];
         String result = readFile.toString();
-        System.out.println(result);
-
-
-
-
-//        System.out.println(bitSet.toString());
-//        StringBuilder s = new StringBuilder();
-
-//        for(int i=0;i<bitSet.length();i++) {
-//            if(bitSet.get(i)){
-//                s.append("1");
-//            }
-//            else{
-//                s.append("0");
-//            }
-//        }
-//        System.out.println(s.toString());
 
         bufferedInputStream.close();
         return coded;

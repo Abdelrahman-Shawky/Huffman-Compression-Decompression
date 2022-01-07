@@ -7,8 +7,7 @@ import java.util.Stack;
 public class HuffmanDecoder {
 
     private static int numOfNodes;
-    private static String encoded;
-    private static HashMap<String, String> prefixHashMap;
+    private static String encodedTree;
 
     public static void main(String[] args) throws IOException {
 
@@ -35,74 +34,45 @@ public class HuffmanDecoder {
         }
 
         String result = readFile.toString();
-        System.out.println(result);
+
         numOfNodes = Integer.parseInt(result.substring(0,8),2);
         System.out.println(numOfNodes);
-        result = result.substring(8,result.length());
-        System.out.println(result);
-//        Node headNode = readNode(result,numOfNodes);
-//        printInorder(headNode);
-        System.out.println(result.charAt(3));
-        encoded = result;
+        result = result.substring(8);
+        encodedTree = result;
+
+        int length = encodedTree.length();
+        while(length%8 != 0){
+            encodedTree+="0";
+            length++;
+        }
         Node headNode = readNode();
-        System.out.println(encoded);
-        String prefix = "";
-//        buildPrefix(headNode,prefix);
-//        encoded = encoded.split("11011")[1];
-        System.out.println(encoded);
-        String decoded = decode(headNode,encoded);
+
+        String decoded = decode(headNode,encodedTree);
         System.out.println(decoded);
 
-        printInorder(headNode);
-
-
+//        printInorder(headNode);
 
         bufferedInputStream.close();
-
-
+        System.out.println("Doneeeee");
     }
 
-    public static Node readNode() throws IOException {
+    public static Node readNode() {
 
-        System.out.println(encoded);
-        Node leftChild=null;
-        Node rightChild=null;
-        if(numOfNodes==0){
-            return new Node(0, leftChild, rightChild);
-        }
-            if (encoded.charAt(0) == '1') {
+        char c = encodedTree.charAt(0);
+        encodedTree = encodedTree.substring(1);
+        if (c == '1') {
                 numOfNodes--;
-                System.out.println(numOfNodes);
-                String nodeData = String.valueOf((char) Integer.parseInt(encoded.substring(1, 9), 2));
-                encoded = encoded.substring(8);
-                System.out.println(nodeData);
+                String nodeData = String.valueOf((char) Integer.parseInt(encodedTree.substring(0, 8), 2));
+                encodedTree = encodedTree.substring(8);
                 return new Node(nodeData, null, null, 0);
-            } else{
-                encoded = encoded.substring(1);
-                leftChild = readNode();
-                encoded = encoded.substring(1);
-                rightChild = readNode();
+        }
+        else{
+                Node leftChild = readNode();
+                Node rightChild = readNode();
                 return new Node(0, leftChild, rightChild);
             }
 
     }
-
-    public static void buildPrefix(Node node, String prefix) {
-        if (node != null) {
-            if (node.getLeft() == null && node.getRight() == null) {
-                prefixHashMap.put(node.getCharacter(), prefix);
-            } else {
-                prefix += "0";
-                buildPrefix(node.getLeft(), prefix);
-                prefix = prefix.substring(0, prefix.length() - 1);
-
-                prefix += "1";
-                buildPrefix(node.getRight(), prefix);
-                prefix = prefix.substring(0, prefix.length() - 1);
-            }
-        }
-    }
-
 
     public static void printInorder(Node node)
     {
@@ -122,29 +92,34 @@ public class HuffmanDecoder {
     public static String decode(Node node,String encoded){
         Node decodingNode = node;
         StringBuilder decoded = new StringBuilder();
+        boolean flag=false;
         for (char c : encoded.toCharArray()){
             if(c=='0'){
                 decodingNode = decodingNode.getLeft();
                 if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
-                    decoded.append(decodingNode.getCharacter());
-                    decodingNode = node;
+                    if(!decodingNode.getCharacter().equals("ÿ")) {
+                        decoded.append(decodingNode.getCharacter());
+                        decodingNode = node;
+                    }
                 }
             }
             if(c=='1'){
                 decodingNode = decodingNode.getRight();
                 if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
-//                    if(!decodingNode.getCharacter().equals("ÿ")) {
-                        System.out.println(decodingNode.getCharacter());
+                    if(!decodingNode.getCharacter().equals("ÿ")) {
                         decoded.append(decodingNode.getCharacter());
                         decodingNode = node;
-//                    }
-//                    else{
-//                        return decoded.toString();
-//                    }
+                    }
+                    else if(flag){
+                        break;
+                    }
+                    else {
+                        flag=true;
+                        decodingNode = node;
+                    }
                 }
             }
         }
-
         return decoded.toString();
     }
 
