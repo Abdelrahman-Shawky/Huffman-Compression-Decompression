@@ -8,7 +8,7 @@ public class Controller {
 
     HashMap<String, String> prefixHashMap = new HashMap<>();
     String test;
-    int NUM_BYTES = 1;
+    int NUM_BYTES = 5;
 
     public void buildNodes() throws IOException {
 
@@ -33,7 +33,11 @@ public class Controller {
             nBytes.delete(0,nBytes.length());
         }
         //Insert Character to know end of encoded string
-        nodesHashMap.put("ÿ",1);
+        StringBuilder n = new StringBuilder();
+        for(int i=0;i<NUM_BYTES;i++){
+            n.append("ÿ");
+        }
+        nodesHashMap.put(n.toString(),1);
         test = content.toString();
 
         //Priority Queue to build tree
@@ -55,6 +59,7 @@ public class Controller {
         Node headNode = nodesPriorityQueue.poll();
         StringBuilder prefix = new StringBuilder();
         buildPrefix(headNode, prefix);
+        System.out.println(prefixHashMap);
 
         encode(headNode);
 
@@ -104,22 +109,23 @@ public class Controller {
     }
 
     public String encode(Node headNode) throws IOException {
-        FileOutputStream file = new FileOutputStream("output1.bin");
+        FileOutputStream file = new FileOutputStream("output.bin");
         BufferedOutputStream output = new BufferedOutputStream(file);
 
         StringBuilder treeEncoded = new StringBuilder();
         StringBuilder treeEncodedString = new StringBuilder();
 
         //write number of nodes to first byte
-//        String value = Integer.toBinaryString(prefixHashMap.size());
-//        int length = value.length();
-//        while(length<8){
-//            treeEncoded.append(0);
-//            length++;
-//        }
-//        treeEncoded.append(value);
+        String numBytes = Integer.toBinaryString(NUM_BYTES);
+        int length = numBytes.length();
+        while(length<8){
+            treeEncoded.append(0);
+            length++;
+        }
+        treeEncoded.append(numBytes);
 
         encodeTree(headNode, treeEncoded,treeEncodedString);
+        System.out.println(treeEncodedString);
 
         BitSet treeBitSet = new BitSet();
         int count=0;
