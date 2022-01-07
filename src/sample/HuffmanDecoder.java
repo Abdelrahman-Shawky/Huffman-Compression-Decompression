@@ -1,8 +1,6 @@
 package sample;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Stack;
 
 public class HuffmanDecoder {
 
@@ -11,7 +9,7 @@ public class HuffmanDecoder {
 
     public static void main(String[] args) throws IOException {
 
-        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
+        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\output1.bin");
         FileInputStream fileInputStream = new FileInputStream(fileinput);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
@@ -33,18 +31,19 @@ public class HuffmanDecoder {
             content.delete(0,content.length());
         }
 
-        String result = readFile.toString();
+        encodedTree = readFile.toString();
 
-        numOfNodes = Integer.parseInt(result.substring(0,8),2);
-        System.out.println(numOfNodes);
-        result = result.substring(8);
-        encodedTree = result;
+//        numOfNodes = Integer.parseInt(result.substring(0,8),2);
+//        System.out.println(numOfNodes);
+//        result = result.substring(8);
+//        encodedTree = result;
 
-        int length = encodedTree.length();
-        while(length%8 != 0){
-            encodedTree+="0";
-            length++;
-        }
+//        Pad
+//        int length = encodedTree.length();
+//        while(length%8 != 0){
+//            encodedTree+="0";
+//            length++;
+//        }
         Node headNode = readNode();
 
         String decoded = decode(headNode,encodedTree);
