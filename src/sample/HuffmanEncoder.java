@@ -4,70 +4,86 @@ package sample;
 import java.io.*;
 import java.util.*;
 
-public class Controller {
+public class HuffmanEncoder {
 
-    HashMap<String, String> prefixHashMap = new HashMap<>();
-    String test;
-    int NUM_BYTES = 5;
+    private static HashMap<String, String> prefixHashMap = new HashMap<>();
+    private static String test;
+    private static int NUM_BYTES = 1;
+    private static int BLOCK_SIZE = 1024;
 
-    public void buildNodes() throws IOException {
+    public static void main(String[] args) throws IOException {
+        buildNodes();
+    }
+
+
+    public static void buildNodes() throws IOException {
 
         HashMap<String, Integer> nodesHashMap = new HashMap<>();
 
-        File file = new File("E:\\Java Projects\\HuffmanCompression\\test.txt");
+        File file = new File("E:\\Java Projects\\HuffmanCompression\\test_group_31.txt");
         FileInputStream in = new FileInputStream(file);
         BufferedInputStream buffer = new BufferedInputStream(in);
 
-        StringBuilder nBytes = new StringBuilder();
-        StringBuilder content = new StringBuilder();
-        byte line[] = new byte[NUM_BYTES];
-        while((buffer.read(line)) != -1){
-            for(int i=0; i<NUM_BYTES; i++){
-                nBytes.append((char)line[i]);
-                line[i]=0;
+        //read in blocks
+//        for(int j=0;j<1;j++) {
+//            int size=0;
+
+            StringBuilder nBytes = new StringBuilder();
+            StringBuilder content = new StringBuilder();
+            byte line[] = new byte[NUM_BYTES];
+            while ((buffer.read(line)) != -1) {
+                for (int i = 0; i < NUM_BYTES; i++) {
+                    nBytes.append((char) line[i]);
+                    line[i] = 0;
+                }
+                content.append(nBytes);
+                nodesHashMap.putIfAbsent(nBytes.toString(), 0);
+                nodesHashMap.put(nBytes.toString(), nodesHashMap.get(nBytes.toString()) + 1);
+                nBytes.delete(0, nBytes.length());
+
+//                }
             }
-            content.append(nBytes);
-            nodesHashMap.putIfAbsent(nBytes.toString(), 0);
-            nodesHashMap.put(nBytes.toString(),nodesHashMap.get(nBytes.toString())+1);
-            //Reset nBytes to read next N bytes
-            nBytes.delete(0,nBytes.length());
-        }
-        //Insert Character to know end of encoded string
-        StringBuilder n = new StringBuilder();
-        for(int i=0;i<NUM_BYTES;i++){
-            n.append("ÿ");
-        }
-        nodesHashMap.put(n.toString(),1);
-        test = content.toString();
+            //Insert Character to know end of encoded string
+            String n = "";
+            for (int i = 0; i < NUM_BYTES; i++) {
+                n+="ÿ";
+            }
+            nodesHashMap.put(n, 1);
+            test = content.toString();
+            content.delete(0,content.length());
 
-        //Priority Queue to build tree
-        PriorityQueue<Node> nodesPriorityQueue = new PriorityQueue<>(4, new NodeComparator());
+            //Priority Queue to build tree
+            PriorityQueue<Node> nodesPriorityQueue = new PriorityQueue<>(4, new NodeComparator());
 
-        for(HashMap.Entry<String,Integer> entry : nodesHashMap.entrySet()){
-            Node node = new Node(entry.getKey());
-            node.setFrequency(entry.getValue());
-            nodesPriorityQueue.add(node);
-        }
-        while(nodesPriorityQueue.size()>1)
-        {
-            Node node1 = nodesPriorityQueue.poll();
-            Node node2 = nodesPriorityQueue.poll();
-            Node nodeResult = new Node(node1.getFrequency()+node2.getFrequency(),node1,node2);
-            nodesPriorityQueue.add(nodeResult);
-        }
+            for (HashMap.Entry<String, Integer> entry : nodesHashMap.entrySet()) {
+                Node node = new Node(entry.getKey());
+                node.setFrequency(entry.getValue());
+                nodesPriorityQueue.add(node);
+            }
+            nodesHashMap.clear();
 
-        Node headNode = nodesPriorityQueue.poll();
-        StringBuilder prefix = new StringBuilder();
-        buildPrefix(headNode, prefix);
-        System.out.println(prefixHashMap);
+            while (nodesPriorityQueue.size() > 1) {
+                Node node1 = nodesPriorityQueue.poll();
+                Node node2 = nodesPriorityQueue.poll();
+                Node nodeResult = new Node(node1.getFrequency() + node2.getFrequency(), node1, node2);
+                nodesPriorityQueue.add(nodeResult);
+            }
 
-        encode(headNode);
+            Node headNode = nodesPriorityQueue.poll();
+            StringBuilder prefix = new StringBuilder();
+            buildPrefix(headNode, prefix);
+            prefix.delete(0,prefix.length());
+//        System.out.println(prefixHashMap);
+
+            encode(headNode);
+//        }
 
         System.out.println("Doneeeee");
+        buffer.close();
     }
 
     //https://www.journaldev.com/
-    public void buildPrefix(Node node, StringBuilder prefix) {
+    public static void buildPrefix(Node node, StringBuilder prefix) {
         if (node != null) {
             if (node.getLeft() == null && node.getRight() == null) {
                 prefixHashMap.put(node.getCharacter(), prefix.toString());
@@ -83,11 +99,10 @@ public class Controller {
         }
     }
 
-    private void encodeTree(Node headNode, StringBuilder stringBuilder, StringBuilder s) throws IOException {
+    private static void encodeTree(Node headNode, StringBuilder stringBuilder) throws IOException {
 
         if(headNode.isLeafNode()){
             stringBuilder.append(1);
-            s.append(1);
             for(Character c : headNode.getCharacter().toCharArray()){
                 String value = Integer.toBinaryString(c);
                 int length = value.length();
@@ -97,23 +112,21 @@ public class Controller {
                     length++;
                 }
                 stringBuilder.append(Integer.toBinaryString(c));
-                s.append(c);
             }
         }
         else{
             stringBuilder.append(0);
-            s.append(0);
-            encodeTree(headNode.getLeft(),stringBuilder,s);
-            encodeTree(headNode.getRight(),stringBuilder,s);
+            encodeTree(headNode.getLeft(),stringBuilder);
+            encodeTree(headNode.getRight(),stringBuilder);
         }
     }
 
-    public String encode(Node headNode) throws IOException {
-        FileOutputStream file = new FileOutputStream("output.bin");
+    public static void encode(Node headNode) throws IOException {
+        FileOutputStream file = new FileOutputStream("test_group_31.txt.hc");
         BufferedOutputStream output = new BufferedOutputStream(file);
 
         StringBuilder treeEncoded = new StringBuilder();
-        StringBuilder treeEncodedString = new StringBuilder();
+//        StringBuilder treeEncodedString = new StringBuilder();
 
         //write number of nodes to first byte
         String numBytes = Integer.toBinaryString(NUM_BYTES);
@@ -124,8 +137,8 @@ public class Controller {
         }
         treeEncoded.append(numBytes);
 
-        encodeTree(headNode, treeEncoded,treeEncodedString);
-        System.out.println(treeEncodedString);
+        encodeTree(headNode, treeEncoded);
+//        System.out.println(treeEncodedString);
 
         BitSet treeBitSet = new BitSet();
         int count=0;
@@ -138,6 +151,7 @@ public class Controller {
             }
             count++;
         }
+        treeEncoded.delete(0,treeEncoded.length());
 //        output.write(treeBitSet.toByteArray());
 
         StringBuilder coded = new StringBuilder();
@@ -168,6 +182,8 @@ public class Controller {
             }
             count++;
         }
+//        System.out.println(coded);
+        coded.delete(0,coded.length());
 
         //lost trailing zero
         output.write(treeBitSet.toByteArray());
@@ -200,7 +216,7 @@ public class Controller {
         bufferedInputStream.close();
 
          */
-        return coded.toString();
+//        return coded.toString();
     }
 
 }

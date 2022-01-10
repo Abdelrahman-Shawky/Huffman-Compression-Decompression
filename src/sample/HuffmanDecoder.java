@@ -8,10 +8,11 @@ public class HuffmanDecoder {
     private static String encodedTree;
     private static String n="";
     private static int NUM_BYTES;
+    private static int BLOCK_SIZE;
 
     public static void main(String[] args) throws IOException {
 
-        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
+        File fileinput = new File("E:\\Java Projects\\HuffmanCompression\\test_group_31.txt.hc");
         FileInputStream fileInputStream = new FileInputStream(fileinput);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
@@ -53,7 +54,18 @@ public class HuffmanDecoder {
 
 
         String decoded = decode(headNode,encodedTree);
-        System.out.println(decoded);
+
+        FileOutputStream file = new FileOutputStream("test_group_31_decompressed.txt");
+        BufferedOutputStream output = new BufferedOutputStream(file);
+
+        for(Character c : decoded.toCharArray())
+        {
+            output.write(c);
+        }
+        output.close();
+
+
+//        System.out.println(decoded);
 
 //        printInorder(headNode);
 
@@ -130,5 +142,6 @@ public class HuffmanDecoder {
         }
         return decoded.toString();
     }
+
 
 }
