@@ -8,25 +8,62 @@ public class HuffmanEncoder {
 
     private static HashMap<String, String> prefixHashMap = new HashMap<>();
     private static String test;
-    private static int NUM_BYTES = 1;
+    private static int NUM_BYTES;
     private static int BLOCK_SIZE = 1024;
+    private static String PATH;
+    private static String encodedTree;
+    private static String n="";
+    private static double INPUT_FILE_SIZE;
+    private static double OUTPUT_FILE_SIZE;
 
     public static void main(String[] args) throws IOException {
-        buildNodes();
-    }
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine();
+        String comp_decomp = input.substring(0,1);
+//        System.out.println(comp_decomp);
+        long endTime;
+        long startTime;
+        long timeElapsed = 0;
+        double time = 0;
 
+        if(comp_decomp.equals("c")){
+            PATH = input.substring(2,input.length()-2);
+//            System.out.println(PATH);
+            NUM_BYTES = Integer.parseInt(input.substring(input.length()-1));
+//            System.out.println(NUM_BYTES);
+            startTime = System.currentTimeMillis();
+            buildNodes();
+            endTime = System.currentTimeMillis();
+            timeElapsed = endTime - startTime;
+            time = timeElapsed;
+            System.out.println("Compression Time = " + time/1000 + "s");
+            double ratio = (INPUT_FILE_SIZE/OUTPUT_FILE_SIZE)*100;
+            System.out.println("Compression Ratio = " + ratio + "%");
+
+        }
+        else if(comp_decomp.equals("d")){
+            PATH = input.substring(2);
+//            System.out.println(PATH);
+            startTime = System.currentTimeMillis();
+            decodeFile();
+            endTime = System.currentTimeMillis();
+            timeElapsed = endTime - startTime;
+            time = timeElapsed;
+            System.out.println("Decompression Time = " + timeElapsed + "ms");
+            System.out.println("Decompression Time = " + time/1000 + "s");
+
+        }
+    }
 
     public static void buildNodes() throws IOException {
 
         HashMap<String, Integer> nodesHashMap = new HashMap<>();
-
-        File file = new File("E:\\Java Projects\\HuffmanCompression\\test_group_31.txt");
+        
+        File file = new File(PATH);
+        INPUT_FILE_SIZE = file.length();
         FileInputStream in = new FileInputStream(file);
         BufferedInputStream buffer = new BufferedInputStream(in);
 
-        //read in blocks
-//        for(int j=0;j<1;j++) {
-//            int size=0;
 
             StringBuilder nBytes = new StringBuilder();
             StringBuilder content = new StringBuilder();
@@ -41,7 +78,6 @@ public class HuffmanEncoder {
                 nodesHashMap.put(nBytes.toString(), nodesHashMap.get(nBytes.toString()) + 1);
                 nBytes.delete(0, nBytes.length());
 
-//                }
             }
             //Insert Character to know end of encoded string
             String n = "";
@@ -78,7 +114,7 @@ public class HuffmanEncoder {
             encode(headNode);
 //        }
 
-        System.out.println("Doneeeee");
+//        System.out.println("Doneeeee");
         buffer.close();
     }
 
@@ -122,7 +158,12 @@ public class HuffmanEncoder {
     }
 
     public static void encode(Node headNode) throws IOException {
-        FileOutputStream file = new FileOutputStream("test_group_31.txt.hc");
+        System.out.println("- A " + prefixHashMap.get("A"));
+        System.out.println("- B " + prefixHashMap.get("B"));
+        String FILE_NAME = PATH.substring(PATH.lastIndexOf('\\')+1);
+        String NEW_FILE_NAME = "6353." + NUM_BYTES + "." + FILE_NAME + ".hc";
+        String TARGET_PATH = PATH.substring(0,PATH.lastIndexOf('\\')) + NEW_FILE_NAME;
+        FileOutputStream file = new FileOutputStream(TARGET_PATH);
         BufferedOutputStream output = new BufferedOutputStream(file);
 
         StringBuilder treeEncoded = new StringBuilder();
@@ -189,9 +230,18 @@ public class HuffmanEncoder {
         output.write(treeBitSet.toByteArray());
 
         output.close();
-        /*
-        File fileInput = new File("E:\\Java Projects\\HuffmanCompression\\output.bin");
-        FileInputStream fileInputStream = new FileInputStream(fileInput);
+        File outputFile = new File(TARGET_PATH);
+        OUTPUT_FILE_SIZE = outputFile.length();
+
+    }
+
+
+    //Decoder
+
+
+    public static void decodeFile() throws IOException {
+        File fileinput = new File(PATH);
+        FileInputStream fileInputStream = new FileInputStream(fileinput);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
         int bytesRead=-1;
@@ -211,12 +261,102 @@ public class HuffmanEncoder {
             readFile.append(content.toString());
             content.delete(0,content.length());
         }
-        String result = readFile.toString();
+
+        encodedTree = readFile.toString();
+
+        NUM_BYTES = Integer.parseInt(encodedTree.substring(0,8),2);
+        encodedTree = encodedTree.substring(8);
+        //Final character in encoded string
+        for(int i=0;i<NUM_BYTES;i++){
+            n+="ÿ";
+        }
+
+//        Pad
+//        int length = encodedTree.length();
+//        while(length%8 != 0){
+//            encodedTree+="0";
+//            length++;
+//        }
+        Node headNode = readNode();
+
+
+
+        String decoded = decode(headNode,encodedTree);
+
+        String FILE_NAME = PATH.substring(PATH.lastIndexOf('\\')+1,PATH.length()-3);
+        String NEW_FILE_NAME = "extracted." + FILE_NAME;
+//        System.out.println(NEW_FILE_NAME);
+        String TARGET_PATH = PATH.substring(0,PATH.lastIndexOf('\\')) + NEW_FILE_NAME;
+        FileOutputStream file = new FileOutputStream(TARGET_PATH);
+        BufferedOutputStream output = new BufferedOutputStream(file);
+
+        for(Character c : decoded.toCharArray())
+        {
+            output.write(c);
+        }
+        output.close();
+
+
+//        System.out.println(decoded);
+
+//        printInorder(headNode);
 
         bufferedInputStream.close();
+//        System.out.println("Doneeeee");
+    }
 
-         */
-//        return coded.toString();
+    public static Node readNode() {
+
+        char c = encodedTree.charAt(0);
+        encodedTree = encodedTree.substring(1);
+        if (c == '1') {
+            String nodeData="";
+            for(int i=0;i<NUM_BYTES;i++) {
+                nodeData += String.valueOf((char) Integer.parseInt(encodedTree.substring(0, 8), 2));
+                encodedTree = encodedTree.substring(8);
+            }
+            return new Node(nodeData, null, null, 0);
+        }
+        else{
+            Node leftChild = readNode();
+            Node rightChild = readNode();
+            return new Node(0, leftChild, rightChild);
+        }
+
+    }
+
+    public static String decode(Node node,String encoded){
+        Node decodingNode = node;
+        StringBuilder decoded = new StringBuilder();
+        boolean flag=false;
+        for (char c : encoded.toCharArray()){
+            if(c=='0'){
+                decodingNode = decodingNode.getLeft();
+                if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
+                    if(!decodingNode.getCharacter().equals(n)) {
+                        decoded.append(decodingNode.getCharacter());
+                        decodingNode = node;
+                    }
+                }
+            }
+            if(c=='1'){
+                decodingNode = decodingNode.getRight();
+                if(decodingNode.getLeft()==null && decodingNode.getRight()==null){
+                    if(!decodingNode.getCharacter().equals(n)) {
+                        decoded.append(decodingNode.getCharacter());
+                        decodingNode = node;
+                    }
+                    else if(flag){
+                        break;
+                    }
+                    else {
+                        flag=true;
+                        decodingNode = node;
+                    }
+                }
+            }
+        }
+        return decoded.toString();
     }
 
 }
