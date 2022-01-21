@@ -1,5 +1,5 @@
 # Huffman-Compression-Decompression
-Huffman’s algorithm uses a greedy method to encode data in order to save space where the higher the frequency of a byte appearing the smaller its given code so it won’t take up much space.
+**Huffman’s algorithm** uses a **greedy** method to encode data in order to save space where the higher the frequency of a byte appearing the smaller its given code, thus reducing overall space.
 <p align="center"><img src="src/images/compression.png"></p>
 
 ## Binary Files:
@@ -47,6 +47,21 @@ java -jar huffman.jar
 d absolute_path_to_input_file
 ```
 - d means decompressing the file
+
+## Challenges
+- Bit manipulation
+  - Java's input/output streams aren't bit addressable therefore making it difficult to read and write bits to and from binary files
+  - Bitset Class was used to overcome this issue where a string of 1's & 0's was converted to a bit array
+- Padding Extra Bits 
+  - Difficult to establish where the encoded data ends due to padding bits if data length is not divisible by 8
+  - Adding an extra non-recurring character with a frequency of one thus indicating where the encoded data ends
+- Execution Time
+  - Improved through the use of BufferedInputStream/BufferedOutputStream Classes instead of reading byte by byte without buffering
+  - Using StringBuilder Class for more efficient string operations
+  - Decreasing unnecessary conversions to/from other representations (object allocation is costly)
+- Writing Prefix Tree to File Header
+  - Traversing prefix tree to encode it where 0 is written if non-leaf node, 1 is written if leaf node followed by the ASCII character (8 bits)
+  - Decoding is done respectively to build tree again when decompressing
 
 ## Conclusion:
 Huffman’s algorithm is an efficient algorithm in compression and decompression but a downside of it, is the size the encoded tree takes in the compressed file which decreases the overall compression ratio. This could be improved through Canonical Huffman Coding where only the bit lengths are stored in the file thus improving the overall compression ratio and decreasing file size.
